@@ -5,7 +5,7 @@ const mysql = require("mysql");
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "root123", // or your MySQL password
+  password: "1234@hav", // or your MySQL password
   database: "hospital_db", // make sure this database exists
 });
 
