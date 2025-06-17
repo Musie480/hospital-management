@@ -10,8 +10,8 @@ export default function DepartmentsServices() {
     async function fetchData() {
       try {
         const [deptRes, docRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/departments"),
-          axios.get("http://localhost:5000/api/doctors"),
+          axios.get("http://localhost:5000/routes/departments"),
+          axios.get("http://localhost:5000/routes/doctors"),
         ]);
         setDepartments(deptRes.data);
         setDoctors(docRes.data);
