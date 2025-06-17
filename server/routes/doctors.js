@@ -2,42 +2,54 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// Get doctors with education
+// GET /api/doctors?department_id=...
 router.get("/", (req, res) => {
-  const query = `
-    SELECT doc.id as doctor_id, doc.name, doc.specialization, doc.bio,
-           edu.degree, edu.institution, edu.year
-    FROM doctors doc
-    LEFT JOIN doctor_education edu ON doc.id = edu.doctor_id
-    ORDER BY doc.name, edu.year DESC;
-  `;
-
-  db.query(query, (err, results) => {
+  const { department_id } = req.query;
+  if (!department_id) return res.status(400).json({ message: "Missing department_id" });
+  db.query("SELECT * FROM doctors WHERE department_id = ?", [department_id], (err, results) => {
     if (err) return res.status(500).json({ message: "Server error" });
-
-    const doctorsMap = new Map();
-
-    results.forEach(row => {
-      if (!doctorsMap.has(row.doctor_id)) {
-        doctorsMap.set(row.doctor_id, {
-          id: row.doctor_id,
-          name: row.name,
-          specialization: row.specialization,
-          bio: row.bio,
-          education: []
-        });
-      }
-      if (row.degree) {
-        doctorsMap.get(row.doctor_id).education.push({
-          degree: row.degree,
-          institution: row.institution,
-          year: row.year,
-        });
-      }
-    });
-
-    res.json(Array.from(doctorsMap.values()));
+    res.json(results);
   });
+});
+
+// GET /api/doctors/:id
+router.get("/:id", (req, res) => {
+  db.query("SELECT * FROM doctors WHERE id = ?", [req.params.id], (err, results) => {
+    if (err) return res.status(500).json({ message: "Server error" });
+    res.json(results[0]);
+  });
+});
+
+// GET /api/doctors/:id/education
+router.get("/:id/education", (req, res) => {
+  db.query("SELECT * FROM doctor_education WHERE doctor_id = ?", [req.params.id], (err, results) => {
+    if (err) return res.status(500).json({ message: "Server error" });
+    res.json(results);
+  });
+});
+
+// GET /api/doctors/user/:user_id
+router.get("/user/:user_id", (req, res) => {
+  const { user_id } = req.params;
+  db.query("SELECT * FROM doctors WHERE user_id = ?", [user_id], (err, results) => {
+    if (err) return res.status(500).json({ message: "Server error" });
+    if (results.length === 0) return res.status(404).json({ message: "Doctor not found" });
+    res.json(results[0]);
+  });
+});
+
+// Update doctor profile
+router.put("/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, bio, department_id } = req.body;
+  db.query(
+    "UPDATE doctors SET name = ?, bio = ?, department_id = ? WHERE id = ?",
+    [name, bio, department_id, id],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "Server error" });
+      res.json({ message: "Profile updated" });
+    }
+  );
 });
 
 module.exports = router;
